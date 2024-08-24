@@ -3,7 +3,7 @@ import { atom, useRecoilValue, useSetRecoilState } from "recoil";
 const optionsAtom = atom<OptionsType>({
   key: "options",
   default: {
-    color: "#000",
+    color: "#0000FF",
     brushSize: 5,
   },
 });

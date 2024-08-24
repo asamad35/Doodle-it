@@ -1,9 +1,16 @@
 import React, { useRef, useState } from "react";
-import { FaPalette, FaPencilAlt, FaRedo, FaUndo } from "react-icons/fa";
+import { HexColorPicker } from "react-colorful";
+import {
+  FaPalette,
+  FaPencilAlt,
+  FaRedo,
+  FaRegSquare,
+  FaSquare,
+  FaUndo,
+} from "react-icons/fa";
+import { FaHand } from "react-icons/fa6";
 import { useClickAway } from "react-use";
 import { useOptions, useSetOptions } from "../recoil/options";
-import { HexColorPicker } from "react-colorful";
-import { FaHand } from "react-icons/fa6";
 
 interface ToolbarProps {
   onUndo: () => void;
@@ -42,6 +49,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
   };
   const handleMoveToggle = () => {
     setSelectedTool("pointer");
+  };
+  const handleRectangleToggle = () => {
+    setSelectedTool("rectangle");
   };
   return (
     <div className="absolute flex z-[100] left-4 top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-md p-2">
@@ -115,7 +125,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
           </span>
         </button>
       </div>
-      {/* <div className="flex flex-col space-y-2">
+      <div className="flex flex-col space-y-2">
         <button
           onClick={onRedo}
           className="p-2 hover:bg-gray-100 rounded cursor-pointer relative group"
@@ -125,7 +135,18 @@ const Toolbar: React.FC<ToolbarProps> = ({
             Redo
           </span>
         </button>
-      </div> */}
+        <button
+          onClick={handleRectangleToggle}
+          className={`p-2 hover:bg-gray-100 rounded cursor-pointer relative group ${
+            selectedTool === "rectangle" ? "bg-gray-200" : ""
+          }`}
+        >
+          <FaRegSquare className="w-6 h-6" />
+          <span className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+            Rectangle
+          </span>
+        </button>
+      </div>
     </div>
   );
 };
