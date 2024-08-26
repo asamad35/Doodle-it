@@ -1,26 +1,22 @@
 "use client";
-import {
-  MouseEvent,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { MouseEvent, useLayoutEffect, useRef, useState } from "react";
 import rough from "roughjs";
-import { getStroke } from "perfect-freehand";
-import { RoughCanvas } from "roughjs/bin/canvas";
-import { useElements, useSetElement } from "./recoil/elements";
-import { useOptions, useSetOptions } from "./recoil/options";
+import { v4 as uuidv4 } from "uuid";
+import Toolbar from "./components/topToolbar";
 import {
+  calculateDiameter,
   createElement,
   drawElements,
   getElementAtPosition,
   getResizedCoordinates,
+  getUnitVector,
+  handleCursorStyle,
   moveElement,
   updateElement,
 } from "./helper";
-import { v4 as uuidv4 } from "uuid";
-import Toolbar from "./components/Toolbar";
+import { useElements, useSetElement } from "./recoil/elements";
+import { useOptions } from "./recoil/options";
+import { useCursorPosition } from "./hooks/useCursorPosition";
 
 export default function Home() {
   const setElements = useSetElement();
@@ -36,6 +32,7 @@ export default function Home() {
     useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
+  const { cursorX, cursorY } = useCursorPosition();
 
   useLayoutEffect(() => {
     const myCanvas = canvasRef.current;
@@ -60,7 +57,7 @@ export default function Home() {
       const element = getElementAtPosition(e.clientX, e.clientY, elements);
       if (!element) return;
       setIsSelectedElementGrabbed(true);
-      const selectedElement = { ...element };
+      let selectedElement = { ...element };
       switch (selectedElement.type) {
         case "freehand":
           selectedElement.xOffsets = selectedElement.points.map(
@@ -72,14 +69,82 @@ export default function Home() {
           break;
 
         case "rectangle":
-          if (
-            ["topLeft", "topRight", "bottomLeft", "bottomRight"].includes(
-              selectedElement.position ?? ""
-            )
-          ) {
+          {
+            selectedElement.xOffset = e.clientX - selectedElement.x1;
+            selectedElement.yOffset = e.clientY - selectedElement.y1;
+
+            const grabbedFromEdge = [
+              "topLeft",
+              "topRight",
+              "bottomLeft",
+              "bottomRight",
+            ].includes(selectedElement.position ?? "");
+            if (grabbedFromEdge) {
+              setIsResizing(true);
+            }
+          }
+          break;
+
+        case "line": {
+          selectedElement.xOffset = e.clientX - selectedElement.x1;
+          selectedElement.yOffset = e.clientY - selectedElement.y1;
+
+          const grabbedFromEdge = ["start", "end"].includes(
+            selectedElement.position ?? ""
+          );
+          if (grabbedFromEdge) {
             setIsResizing(true);
           }
           break;
+        }
+
+        case "circle": {
+          selectedElement.xOffset = e.clientX - selectedElement.x1;
+          selectedElement.yOffset = e.clientY - selectedElement.y1;
+
+          const grabbed = ["circumference"].includes(
+            selectedElement.position ?? ""
+          );
+
+          if (grabbed) {
+            // find the diametrical opposite point exactly on circle
+            const { x1, y1, x2, y2 } = selectedElement;
+            const centerX = (x1 + x2) / 2;
+            const centerY = (y1 + y2) / 2;
+
+            // Calculate the radius of the circle
+            const radius = calculateDiameter(x1, y1, x2, y2) / 2;
+            const { unitVectorX, unitVectorY } = getUnitVector(
+              e.clientX,
+              e.clientY,
+              centerX,
+              centerY,
+              radius
+            );
+
+            // Scale the unit vector by the radius to get the exact point on the circumference
+            const exactX = centerX + unitVectorX * radius;
+            const exactY = centerY + unitVectorY * radius;
+
+            // Calculate the opposite point exactly on the circumference
+            const oppositeX = centerX - unitVectorX * radius;
+            const oppositeY = centerY - unitVectorY * radius;
+
+            const newCoordinates = {
+              x1: oppositeX,
+              y1: oppositeY,
+              x2: exactX,
+              y2: exactY,
+            };
+
+            selectedElement = { ...selectedElement, ...newCoordinates };
+
+            updateElement(newCoordinates, setElements, selectedElement);
+
+            setIsResizing(true);
+          }
+          break;
+        }
         default:
           break;
       }
@@ -105,27 +170,7 @@ export default function Home() {
     if (selectedTool === "pointer") {
       const element = getElementAtPosition(e.clientX, e.clientY, elements);
       if (element || isSelectedElementGrabbed) {
-        switch (element?.position) {
-          case "inside":
-            document.body.style.cursor = "move";
-            break;
-          case "topLeft":
-            document.body.style.cursor = "nw-resize";
-            break;
-          case "topRight":
-            document.body.style.cursor = "ne-resize";
-            break;
-          case "bottomLeft":
-            document.body.style.cursor = "sw-resize";
-            break;
-          case "bottomRight":
-            document.body.style.cursor = "se-resize";
-            break;
-
-          default:
-            document.body.style.cursor = "default";
-            break;
-        }
+        handleCursorStyle(element?.position);
       } else {
         document.body.style.cursor = "default";
       }
@@ -133,24 +178,18 @@ export default function Home() {
       if (isSelectedElementGrabbed && selectedElement) {
         switch (selectedElement.type) {
           case "freehand":
-            moveElement(
-              e.clientX,
-              e.clientY,
-              e.clientX,
-              e.clientY,
-              selectedElement,
-              setElements
-            );
+            moveElement(e.clientX, e.clientY, selectedElement, setElements);
             break;
 
           case "rectangle":
+          case "line":
             if (isResizing) {
               const resizedCoordinates = getResizedCoordinates(
                 e.clientX,
                 e.clientY,
                 selectedElement
               );
-
+              if (!resizedCoordinates) return;
               updateElement(
                 {
                   x1: resizedCoordinates.x1,
@@ -159,10 +198,27 @@ export default function Home() {
                   y2: resizedCoordinates.y2,
                 },
                 setElements,
-                selectedElement
+                selectedElement,
               );
+            } else {
+              // move rectangle or line
+              moveElement(e.clientX, e.clientY, selectedElement, setElements);
             }
             break;
+
+          case "circle": {
+            if (isResizing) {
+              const updatedCoordinates = {
+                x1: selectedElement.x1,
+                y1: selectedElement.y1,
+                x2: e.clientX,
+                y2: e.clientY,
+              };
+              updateElement(updatedCoordinates, setElements, selectedElement);
+            } else {
+              moveElement(e.clientX, e.clientY, selectedElement, setElements);
+            }
+          }
         }
         return;
       }
@@ -184,6 +240,12 @@ export default function Home() {
 
   return (
     <div>
+      <p
+        className="absolute text-sm bg-black bg-opacity-70 text-white p-1 rounded pointer-events-none"
+        style={{ top: cursorY + 10, left: cursorX + 10 }}
+      >
+        {cursorX}|{cursorY}
+      </p>
       <Toolbar
         onUndo={() => {}}
         onRedo={() => {}}

@@ -3,8 +3,12 @@ import { atom, useRecoilValue, useSetRecoilState } from "recoil";
 const optionsAtom = atom<OptionsType>({
   key: "options",
   default: {
-    color: "#0000FF",
-    brushSize: 5,
+    strokeColor: "#0000FF",
+    strokeWidth: 5,
+    roughness: 0,
+    fillColor: "black",
+    fillStyle: "solid",
+    strokeStyle: "solid",
   },
 });
 
