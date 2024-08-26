@@ -152,10 +152,7 @@ export default function Home() {
     } else {
       const newElement = createElement(
         uuidv4(),
-        e.clientX,
-        e.clientY,
-        e.clientX,
-        e.clientY,
+        { x1: e.clientX, y1: e.clientY, x2: e.clientX, y2: e.clientY },
         selectedTool,
         setElements,
         options
@@ -198,7 +195,7 @@ export default function Home() {
                   y2: resizedCoordinates.y2,
                 },
                 setElements,
-                selectedElement,
+                selectedElement
               );
             } else {
               // move rectangle or line

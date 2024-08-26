@@ -172,15 +172,11 @@ const distance = (a: PointType, b: PointType) =>
 
 export function createElement(
   id: string,
-  x1: number,
-  y1: number,
-  x2: number,
-  y2: number,
+  { x1, y1, x2, y2 }: { x1: number; y1: number; x2: number; y2: number },
   selectedTool: ToolItemType,
   setElements: React.Dispatch<React.SetStateAction<ElementType[]>>,
   options: OptionsType
 ): ElementType {
-  console.log(options, "options");
   const roughOptions = {
     stroke: options.strokeColor,
     strokeWidth: options.strokeWidth,
@@ -352,13 +348,9 @@ export const updateElement = (
 
     if (["rectangle", "circle", "line"].includes(element.type)) {
       const { options } = targetElement;
-      console.log(options, "update");
       const newElement = createElement(
         targetElement.id,
-        x1,
-        y1,
-        x2,
-        y2,
+        { x1, y1, x2, y2 },
         element.type,
         setElements,
         options
