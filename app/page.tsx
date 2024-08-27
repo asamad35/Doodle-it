@@ -2,7 +2,7 @@
 import { MouseEvent, useLayoutEffect, useRef, useState } from "react";
 import rough from "roughjs";
 import { v4 as uuidv4 } from "uuid";
-import Toolbar from "./components/topToolbar";
+import TopToolbar from "./components/topToolbar";
 import {
   calculateDiameter,
   createElement,
@@ -14,9 +14,10 @@ import {
   moveElement,
   updateElement,
 } from "./helper";
+import { useCursorPosition } from "./hooks/useCursorPosition";
 import { useElements, useSetElement } from "./recoil/elements";
 import { useOptions } from "./recoil/options";
-import { useCursorPosition } from "./hooks/useCursorPosition";
+import SideToolbar from "./components/sideToolbar";
 
 export default function Home() {
   const setElements = useSetElement();
@@ -243,12 +244,11 @@ export default function Home() {
       >
         {cursorX}|{cursorY}
       </p>
-      <Toolbar
-        onUndo={() => {}}
-        onRedo={() => {}}
+      <TopToolbar
         setSelectedTool={setSelectedTool}
         selectedTool={selectedTool}
       />
+      <SideToolbar />
       <canvas
         id="myCanvas"
         ref={canvasRef}

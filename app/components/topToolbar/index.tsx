@@ -1,19 +1,12 @@
 import React, { useRef, useState } from "react";
-import { HexColorPicker } from "react-colorful";
 import {
-  FaPalette,
-  FaPencilAlt,
-  FaRedo,
   FaRegCircle,
-  FaRegSquare,
-  FaUndo,
+  FaRegSquare
 } from "react-icons/fa";
-import { FaHand } from "react-icons/fa6";
 import { GoDash } from "react-icons/go";
-import { useClickAway } from "react-use";
-import { useOptions, useSetOptions } from "../../recoil/options";
 import { IoHandRightOutline } from "react-icons/io5";
 import { LuEraser, LuPencil } from "react-icons/lu";
+import { useClickAway } from "react-use";
 
 const toolItems = {
   pointer: "pointer",
@@ -24,21 +17,15 @@ const toolItems = {
   eraser: "eraser",
 };
 
-interface ToolbarProps {
-  onUndo: () => void;
-  onRedo: () => void;
+interface TopToolbarProps {
   setSelectedTool: (tool: ToolItemType) => void;
   selectedTool: ToolItemType;
 }
 
-const Toolbar: React.FC<ToolbarProps> = ({
-  onUndo,
-  onRedo,
+const TopToolbar: React.FC<TopToolbarProps> = ({
   setSelectedTool,
   selectedTool,
 }) => {
-  const options = useOptions();
-  const setOptions = useSetOptions();
   const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
   const colorPickerRef = useRef<HTMLDivElement>(null);
   const paletteButtonRef = useRef<HTMLButtonElement>(null);
@@ -213,4 +200,4 @@ const Toolbar: React.FC<ToolbarProps> = ({
   );
 };
 
-export default Toolbar;
+export default TopToolbar;
