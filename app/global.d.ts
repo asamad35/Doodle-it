@@ -1,5 +1,5 @@
 type StrokeStyleType = "solid" | "dashed" | "dotted";
-type FillStyleType = "hachure" | "solid";
+type FillStyleType = "hachure" | "solid" | "cross-hatch";
 
 type OptionsType = {
   strokeColor: string;

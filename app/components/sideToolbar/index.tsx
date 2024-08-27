@@ -1,6 +1,8 @@
-import { useOptions, useSetOptions } from "@/app/recoil/options";
-import { fillColors, strokeColors } from "./helper";
+import { useSetOptions } from "@/app/recoil/options";
+import { FaSquare } from "react-icons/fa";
 import ColorPicker from "./ColorPicker";
+import DrawStyle from "./DrawStyle";
+import { fillColors, fillStyles, strokeColors } from "./helper";
 
 const SideToolbar = () => {
   const setOptions = useSetOptions();
@@ -9,6 +11,9 @@ const SideToolbar = () => {
   };
   const updateFillColor = (color: string) => {
     setOptions((prev) => ({ ...prev, fillColor: color }));
+  };
+  const updateFillStyle = (style: FillStyleType) => {
+    setOptions((prev) => ({ ...prev, fillStyle: style }));
   };
 
   return (
@@ -24,6 +29,12 @@ const SideToolbar = () => {
         colorsArray={fillColors}
         onClick={updateFillColor}
         type="fillColor"
+      />
+      <DrawStyle
+        heading="Fill Style"
+        styleArray={fillStyles}
+        onClick={updateFillStyle}
+        type="fillStyle"
       />
     </section>
   );
