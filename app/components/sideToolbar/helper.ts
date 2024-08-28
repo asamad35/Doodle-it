@@ -1,6 +1,3 @@
-import { FaSquare } from "react-icons/fa";
-// import CrossHatchSvg from "@/assets/cross-hatch.svg";
-
 export const strokeColors = [
   "#1e1e1e",
   "#e03131",
@@ -21,4 +18,16 @@ export const fillStyles: { type: FillStyleType; svgPath: string }[] = [
   { type: "hachure", svgPath: "/hachure.svg" },
   { type: "cross-hatch", svgPath: "/cross-hatch.svg" },
   { type: "solid", svgPath: "/solid.svg" },
+];
+
+export const strokeStyles: { type: StrokeStyleType; svgPath: string }[] = [
+  { type: "solid", svgPath: "/stroke-solid.svg" },
+  { type: "dashed", svgPath: "stroke-dashed.svg" },
+  { type: "dotted", svgPath: "stroke-dotted.svg" },
+];
+
+export const strokeWidth: { type: StrokeWidthType; svgPath: string }[] = [
+  { type: "thin", svgPath: "/stroke-thin.svg" },
+  { type: "bold", svgPath: "stroke-bold.svg" },
+  { type: "extraBold", svgPath: "stroke-extra-bold.svg" },
 ];

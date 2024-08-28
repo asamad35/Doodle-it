@@ -1,14 +1,21 @@
 import { atom, useRecoilValue, useSetRecoilState } from "recoil";
+import {
+  fillColors,
+  fillStyles,
+  strokeColors,
+  strokeStyles,
+  strokeWidth,
+} from "../components/sideToolbar/helper";
 
 const optionsAtom = atom<OptionsType>({
   key: "options",
   default: {
-    strokeColor: "#0000FF",
-    strokeWidth: 5,
+    strokeColor: strokeColors[4],
+    strokeWidth: strokeWidth[0].type,
     roughness: 0,
-    fillColor: "black",
-    fillStyle: "solid",
-    strokeStyle: "solid",
+    fillColor: fillColors[4],
+    fillStyle: fillStyles[2].type,
+    strokeStyle: strokeStyles[0].type,
   },
 });
 

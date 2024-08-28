@@ -1,8 +1,13 @@
 import { useSetOptions } from "@/app/recoil/options";
-import { FaSquare } from "react-icons/fa";
 import ColorPicker from "./ColorPicker";
 import DrawStyle from "./DrawStyle";
-import { fillColors, fillStyles, strokeColors } from "./helper";
+import {
+  fillColors,
+  fillStyles,
+  strokeColors,
+  strokeStyles,
+  strokeWidth,
+} from "./helper";
 
 const SideToolbar = () => {
   const setOptions = useSetOptions();
@@ -15,9 +20,14 @@ const SideToolbar = () => {
   const updateFillStyle = (style: FillStyleType) => {
     setOptions((prev) => ({ ...prev, fillStyle: style }));
   };
-
+  const updateStrokeStyle = (style: StrokeStyleType) => {
+    setOptions((prev) => ({ ...prev, strokeStyle: style }));
+  };
+  const updateStrokeWidth = (style: StrokeWidthType) => {
+    setOptions((prev) => ({ ...prev, strokeWidth: style }));
+  };
   return (
-    <section className=" absolute top-1/2 -translate-y-1/2 left-10">
+    <section className="absolute top-1/2 -translate-y-1/2 left-32 flex flex-col justify-center items-center -translate-x-1/2 bg-white rounded-lg shadow-md p-4 border-gray-200 border-[1px] space-x-2">
       <ColorPicker
         heading="Stroke"
         colorsArray={strokeColors}
@@ -35,6 +45,18 @@ const SideToolbar = () => {
         styleArray={fillStyles}
         onClick={updateFillStyle}
         type="fillStyle"
+      />
+      <DrawStyle
+        heading="Stroke Style"
+        styleArray={strokeStyles}
+        onClick={updateStrokeStyle}
+        type="strokeStyle"
+      />
+      <DrawStyle
+        heading="Stroke Width"
+        styleArray={strokeWidth}
+        onClick={updateStrokeWidth}
+        type="strokeWidth"
       />
     </section>
   );

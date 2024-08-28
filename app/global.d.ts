@@ -1,9 +1,10 @@
 type StrokeStyleType = "solid" | "dashed" | "dotted";
+type StrokeWidthType = "thin" | "bold" | "extraBold";
 type FillStyleType = "hachure" | "solid" | "cross-hatch";
 
 type OptionsType = {
   strokeColor: string;
-  strokeWidth: number;
+  strokeWidth: string;
   strokeStyle: StrokeStyleType;
   roughness: number;
   fillStyle: FillStyleType;

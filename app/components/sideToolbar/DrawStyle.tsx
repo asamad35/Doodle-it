@@ -1,7 +1,7 @@
 import { useOptions } from "@/app/recoil/options";
 import Image from "next/image";
 import React from "react";
-import { fillStyles } from "./helper";
+import { fillStyles, strokeStyles, strokeWidth } from "./helper";
 
 type styleType = "fillStyle" | "strokeStyle" | "strokeWidth";
 
@@ -12,8 +12,8 @@ const DrawStyle = ({
   type,
 }: {
   heading: string;
-  styleArray: typeof fillStyles;
-  onClick: (style: FillStyleType) => void;
+  styleArray: typeof fillStyles | typeof strokeStyles | typeof strokeWidth;
+  onClick: (style: any) => void;
   type: styleType;
 }) => {
   const options = useOptions();

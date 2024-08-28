@@ -26,8 +26,18 @@ export const drawElements = (
   switch (element.type) {
     case "freehand":
       {
+        let strokeWidth;
+        if (element.options.strokeWidth === "thin") {
+          strokeWidth = 5;
+        }
+        if (element.options.strokeWidth === "bold") {
+          strokeWidth = 10;
+        }
+        if (element.options.strokeWidth === "extraBold") {
+          strokeWidth = 20;
+        }
         const strokePoints = getStroke(element.points, {
-          size: element.options.strokeWidth,
+          size: strokeWidth,
         });
         const formattedPoints: [number, number][] = strokePoints.map(
           (point) => {
@@ -177,14 +187,29 @@ export function createElement(
   setElements: React.Dispatch<React.SetStateAction<ElementType[]>>,
   options: OptionsType
 ): ElementType {
-  const roughOptions = {
+  const roughOptions: any = {
     stroke: options.strokeColor,
     strokeWidth: options.strokeWidth,
-    strokeLineDash: [10, 15],
     roughness: options.roughness,
     fill: options.fillColor,
     fillStyle: options.fillStyle,
   };
+
+  if (options.strokeStyle === "dashed") {
+    roughOptions.strokeLineDash = [15, 25];
+  }
+  if (options.strokeStyle === "dotted") {
+    roughOptions.strokeLineDash = [6, 8];
+  }
+  if (options.strokeWidth === "thin") {
+    roughOptions.strokeWidth = 5;
+  }
+  if (options.strokeWidth === "bold") {
+    roughOptions.strokeWidth = 10;
+  }
+  if (options.strokeWidth === "extraBold") {
+    roughOptions.strokeWidth = 20;
+  }
   switch (selectedTool) {
     case "freehand": {
       const newElement = {
