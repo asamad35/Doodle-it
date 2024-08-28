@@ -61,14 +61,20 @@ export default function Home() {
     const scaleOffsetY = (scaledHeight - myCanvas.height) / 2;
     setScaleOffset({ x: scaleOffsetX, y: scaleOffsetY });
 
-    // save canvas state before translating
+    const centerX = myCanvas.width / 2;
+    const centerY = myCanvas.height / 2;
+
+    // Calculate the current and new scale offsets
+    const scaleDiff = scale - 1;
+    const newPanOffsetX = panOffset.x - scaleDiff * centerX;
+    const newPanOffsetY = panOffset.y - scaleDiff * centerY;
+    // setScaleOffset({ x: newPanOffsetX, y: newPanOffsetY });
+
+    // Save canvas state before translating
     myCanvasCtx.save();
 
-    // translate canvas to panOffset
-    myCanvasCtx.translate(
-      panOffset.x - scaleOffsetX,
-      panOffset.y - scaleOffsetY
-    );
+    // Translate canvas to the new panOffset
+    myCanvasCtx.translate(newPanOffsetX, newPanOffsetY);
 
     myCanvasCtx.scale(scale, scale);
 
