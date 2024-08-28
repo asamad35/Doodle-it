@@ -471,7 +471,7 @@ export function handleCursorStyle(position: string | null | undefined) {
       break;
 
     default:
-      document.body.style.cursor = "default";
+      document.body.style.cursor = "crosshair";
       break;
   }
 }
@@ -492,4 +492,21 @@ export function getUnitVector(
   const unitVectorX = vectorX / length;
   const unitVectorY = vectorY / length;
   return { unitVectorX, unitVectorY };
+}
+
+export function getCalculatedMouseCoordinates(
+  event: any,
+  scale: number,
+  panOffset: PointType,
+  scaleOffset: PointType
+) {
+  // First, adjust the mouse position by subtracting the panOffset.
+  let clientX = event.clientX - panOffset.x;
+  let clientY = event.clientY - panOffset.y;
+
+  // Then, apply the scale transformation to get the correct coordinates on the canvas.
+  clientX = (clientX + scaleOffset.x) / scale;
+  clientY = (clientY + scaleOffset.y) / scale;
+
+  return { clientX, clientY };
 }

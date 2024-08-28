@@ -1,12 +1,20 @@
 "use client";
-import { MouseEvent, useLayoutEffect, useRef, useState } from "react";
+import {
+  MouseEvent,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import rough from "roughjs";
 import { v4 as uuidv4 } from "uuid";
+import SideToolbar from "./components/sideToolbar";
 import TopToolbar from "./components/topToolbar";
 import {
   calculateDiameter,
   createElement,
   drawElements,
+  getCalculatedMouseCoordinates,
   getElementAtPosition,
   getResizedCoordinates,
   getUnitVector,
@@ -17,7 +25,7 @@ import {
 import { useCursorPosition } from "./hooks/useCursorPosition";
 import { useElements, useSetElement } from "./recoil/elements";
 import { useOptions } from "./recoil/options";
-import SideToolbar from "./components/sideToolbar";
+import Zoom from "./components/zoom";
 
 export default function Home() {
   const setElements = useSetElement();
@@ -34,45 +42,91 @@ export default function Home() {
   const [isDrawing, setIsDrawing] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const { cursorX, cursorY } = useCursorPosition();
+  const [startPanPosition, setStartPanPosition] = useState({ x: 0, y: 0 });
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [scaleOffset, setScaleOffset] = useState({ x: 0, y: 0 });
+  const [scale, setScale] = useState(1);
 
   useLayoutEffect(() => {
     const myCanvas = canvasRef.current;
     if (!myCanvas) return;
     const myCanvasCtx = myCanvas.getContext("2d") as CanvasRenderingContext2D;
     myCanvasCtx.clearRect(0, 0, myCanvas.width, myCanvas.height);
+
+    // find center of scaled canvas
+    const scaledWidth = myCanvas.width * scale;
+    const scaledHeight = myCanvas.height * scale;
+    const scaleOffsetX = (scaledWidth - myCanvas.width) / 2;
+    const scaleOffsetY = (scaledHeight - myCanvas.height) / 2;
+    setScaleOffset({ x: scaleOffsetX, y: scaleOffsetY });
+
+    // save canvas state before translating
+    myCanvasCtx.save();
+
+    // translate canvas to panOffset
+    myCanvasCtx.translate(
+      panOffset.x - scaleOffsetX,
+      panOffset.y - scaleOffsetY
+    );
+
+    myCanvasCtx.scale(scale, scale);
+
     const roughCanvas = rough.canvas(myCanvas);
     elements.forEach((element) => {
       drawElements(roughCanvas, myCanvasCtx, element);
     });
-  }, [elements, canvasRef]);
+
+    // restore canvas state after drawing so that new drawings are not affected
+    myCanvasCtx.restore();
+  }, [elements, canvasRef, panOffset, scale]);
+
+  useEffect(() => {
+    document.body.style.cursor = "crosshair";
+  }, []);
 
   const handleMouseUp = () => {
     setSelectedElement(null);
     setIsSelectedElementGrabbed(false);
     setIsDrawing(false);
     setIsResizing(false);
+    setIsPanning(false);
+    document.body.style.cursor = "crosshair";
   };
 
   const handleMouseDown = (e: MouseEvent<HTMLCanvasElement>) => {
+    const { clientX, clientY } = getCalculatedMouseCoordinates(
+      e,
+      scale,
+      panOffset,
+      scaleOffset
+    );
+    if (selectedTool === "pan") {
+      setStartPanPosition({ x: clientX, y: clientY });
+      setIsPanning(true);
+      document.body.style.cursor = "grabbing";
+      return;
+    }
+
     if (selectedTool === "pointer") {
-      const element = getElementAtPosition(e.clientX, e.clientY, elements);
+      const element = getElementAtPosition(clientX, clientY, elements);
       if (!element) return;
       setIsSelectedElementGrabbed(true);
       let selectedElement = { ...element };
       switch (selectedElement.type) {
         case "freehand":
           selectedElement.xOffsets = selectedElement.points.map(
-            (point) => e.clientX - point.x
+            (point) => clientX - point.x
           );
           selectedElement.yOffsets = selectedElement.points.map(
-            (point) => e.clientY - point.y
+            (point) => clientY - point.y
           );
           break;
 
         case "rectangle":
           {
-            selectedElement.xOffset = e.clientX - selectedElement.x1;
-            selectedElement.yOffset = e.clientY - selectedElement.y1;
+            selectedElement.xOffset = clientX - selectedElement.x1;
+            selectedElement.yOffset = clientY - selectedElement.y1;
 
             const grabbedFromEdge = [
               "topLeft",
@@ -87,8 +141,8 @@ export default function Home() {
           break;
 
         case "line": {
-          selectedElement.xOffset = e.clientX - selectedElement.x1;
-          selectedElement.yOffset = e.clientY - selectedElement.y1;
+          selectedElement.xOffset = clientX - selectedElement.x1;
+          selectedElement.yOffset = clientY - selectedElement.y1;
 
           const grabbedFromEdge = ["start", "end"].includes(
             selectedElement.position ?? ""
@@ -100,8 +154,8 @@ export default function Home() {
         }
 
         case "circle": {
-          selectedElement.xOffset = e.clientX - selectedElement.x1;
-          selectedElement.yOffset = e.clientY - selectedElement.y1;
+          selectedElement.xOffset = clientX - selectedElement.x1;
+          selectedElement.yOffset = clientY - selectedElement.y1;
 
           const grabbed = ["circumference"].includes(
             selectedElement.position ?? ""
@@ -116,8 +170,8 @@ export default function Home() {
             // Calculate the radius of the circle
             const radius = calculateDiameter(x1, y1, x2, y2) / 2;
             const { unitVectorX, unitVectorY } = getUnitVector(
-              e.clientX,
-              e.clientY,
+              clientX,
+              clientY,
               centerX,
               centerY,
               radius
@@ -153,7 +207,7 @@ export default function Home() {
     } else {
       const newElement = createElement(
         uuidv4(),
-        { x1: e.clientX, y1: e.clientY, x2: e.clientX, y2: e.clientY },
+        { x1: clientX, y1: clientY, x2: clientX, y2: clientY },
         selectedTool,
         setElements,
         options
@@ -165,26 +219,39 @@ export default function Home() {
   };
 
   const handleMouseMove = (e: MouseEvent<HTMLCanvasElement>) => {
+    const { clientX, clientY } = getCalculatedMouseCoordinates(
+      e,
+      scale,
+      panOffset,
+      scaleOffset
+    );
+    if (selectedTool === "pan" && isPanning) {
+      const dx = clientX - startPanPosition.x;
+      const dy = clientY - startPanPosition.y;
+      setPanOffset({ x: panOffset.x + dx, y: panOffset.y + dy });
+      return;
+    }
+
     if (selectedTool === "pointer") {
-      const element = getElementAtPosition(e.clientX, e.clientY, elements);
+      const element = getElementAtPosition(clientX, clientY, elements);
       if (element || isSelectedElementGrabbed) {
         handleCursorStyle(element?.position);
       } else {
-        document.body.style.cursor = "default";
+        document.body.style.cursor = "crosshair";
       }
 
       if (isSelectedElementGrabbed && selectedElement) {
         switch (selectedElement.type) {
           case "freehand":
-            moveElement(e.clientX, e.clientY, selectedElement, setElements);
+            moveElement(clientX, clientY, selectedElement, setElements);
             break;
 
           case "rectangle":
           case "line":
             if (isResizing) {
               const resizedCoordinates = getResizedCoordinates(
-                e.clientX,
-                e.clientY,
+                clientX,
+                clientY,
                 selectedElement
               );
               if (!resizedCoordinates) return;
@@ -200,7 +267,7 @@ export default function Home() {
               );
             } else {
               // move rectangle or line
-              moveElement(e.clientX, e.clientY, selectedElement, setElements);
+              moveElement(clientX, clientY, selectedElement, setElements);
             }
             break;
 
@@ -209,12 +276,12 @@ export default function Home() {
               const updatedCoordinates = {
                 x1: selectedElement.x1,
                 y1: selectedElement.y1,
-                x2: e.clientX,
-                y2: e.clientY,
+                x2: clientX,
+                y2: clientY,
               };
               updateElement(updatedCoordinates, setElements, selectedElement);
             } else {
-              moveElement(e.clientX, e.clientY, selectedElement, setElements);
+              moveElement(clientX, clientY, selectedElement, setElements);
             }
           }
         }
@@ -227,8 +294,8 @@ export default function Home() {
         {
           x1,
           y1,
-          x2: e.clientX,
-          y2: e.clientY,
+          x2: clientX,
+          y2: clientY,
         },
         setElements,
         selectedElement
@@ -248,7 +315,8 @@ export default function Home() {
         setSelectedTool={setSelectedTool}
         selectedTool={selectedTool}
       />
-      <SideToolbar />
+      <SideToolbar selectedTool={selectedTool} />
+      <Zoom setScale={setScale} />
       <canvas
         id="myCanvas"
         ref={canvasRef}

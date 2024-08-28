@@ -69,6 +69,7 @@ const toolItems = {
   line: "line",
   circle: "circle",
   eraser: "eraser",
+  pan: "pan",
 };
 
 type ToolItemType = keyof typeof toolItems;

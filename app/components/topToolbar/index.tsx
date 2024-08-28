@@ -1,12 +1,9 @@
-import React, { useRef, useState } from "react";
-import {
-  FaRegCircle,
-  FaRegSquare
-} from "react-icons/fa";
+import React from "react";
+import { FaRegCircle, FaRegSquare } from "react-icons/fa";
 import { GoDash } from "react-icons/go";
 import { IoHandRightOutline } from "react-icons/io5";
 import { LuEraser, LuPencil } from "react-icons/lu";
-import { useClickAway } from "react-use";
+import { TbPointer } from "react-icons/tb";
 
 const toolItems = {
   pointer: "pointer",
@@ -15,6 +12,7 @@ const toolItems = {
   line: "line",
   circle: "circle",
   eraser: "eraser",
+  pan: "pan",
 };
 
 interface TopToolbarProps {
@@ -26,23 +24,13 @@ const TopToolbar: React.FC<TopToolbarProps> = ({
   setSelectedTool,
   selectedTool,
 }) => {
-  const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
-  const colorPickerRef = useRef<HTMLDivElement>(null);
-  const paletteButtonRef = useRef<HTMLButtonElement>(null);
-
-  useClickAway(colorPickerRef, (event: MouseEvent | TouchEvent) => {
-    if (!paletteButtonRef.current?.contains(event.target as Node)) {
-      setIsColorPickerOpen(false);
-    }
-  });
-
   const handleLineToggle = () => {
     setSelectedTool("line");
   };
   const handleFreehandToggle = () => {
     setSelectedTool("freehand");
   };
-  const handleMoveToggle = () => {
+  const handleSelectToggle = () => {
     setSelectedTool("pointer");
   };
   const handleRectangleToggle = () => {
@@ -55,15 +43,24 @@ const TopToolbar: React.FC<TopToolbarProps> = ({
   const handleEraserToggle = () => {
     setSelectedTool("eraser");
   };
+  const handlePanToggle = () => {
+    setSelectedTool("pan");
+  };
 
   const iconSize = "15";
 
   const toolsDetails = [
     {
-      type: toolItems.pointer,
+      type: toolItems.pan,
       icon: <IoHandRightOutline size={iconSize} />,
-      tooltip: "Move",
-      handleFunction: handleMoveToggle,
+      tooltip: "pan",
+      handleFunction: handlePanToggle,
+    },
+    {
+      type: toolItems.pointer,
+      icon: <TbPointer size={iconSize} />,
+      tooltip: "Select",
+      handleFunction: handleSelectToggle,
     },
     {
       type: toolItems.freehand,
@@ -113,89 +110,6 @@ const TopToolbar: React.FC<TopToolbarProps> = ({
           </span>
         </button>
       ))}
-
-      {/* <button
-          onClick={onUndo}
-          className="p-2 hover:bg-gray-100 rounded cursor-pointer relative group"
-        >
-          <FaUndo className="w-6 h-6" />
-          <span className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-            Undo
-          </span>
-        </button>
-        <button
-          ref={paletteButtonRef}
-          onClick={() => setIsColorPickerOpen((prev) => !prev)}
-          className={`p-2 hover:bg-gray-100 rounded cursor-pointer relative group`}
-        >
-          <FaPalette className="w-6 h-6" />
-          <span className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-            Color Picker
-          </span>
-        </button>
-        {isColorPickerOpen && (
-          <div className="absolute left-full ml-2" ref={colorPickerRef}>
-            <HexColorPicker
-              color={options.color}
-              onChange={(e: any) => setOptions({ ...options, color: e })}
-            />
-          </div>
-        )}
-        <button
-          onClick={handleFreehandToggle}
-          className={`p-2 hover:bg-gray-100 rounded cursor-pointer relative group ${
-            selectedTool === "freehand" ? "bg-gray-200" : ""
-          }`}
-        >
-          <FaPencilAlt className="w-6 h-6" />
-          <span className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-            Freehand Tool
-          </span>
-        </button> */}
-      {/* <div className="flex flex-col space-y-2">
-        <button
-          onClick={onRedo}
-          className="p-2 hover:bg-gray-100 rounded cursor-pointer relative group"
-        >
-          <FaRedo className="w-6 h-6" />
-          <span className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-            Redo
-          </span>
-        </button>
-        <button
-          onClick={handleRectangleToggle}
-          className={`p-2 hover:bg-gray-100 rounded cursor-pointer relative group ${
-            selectedTool === "rectangle" ? "bg-gray-200" : ""
-          }`}
-        >
-          <FaRegSquare className="w-6 h-6" />
-          <span className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-            Rectangle
-          </span>
-        </button>
-        <button
-          onClick={handleLineToggle}
-          className={`p-2 hover:bg-gray-100 rounded cursor-pointer relative group ${
-            selectedTool === "line" ? "bg-gray-200" : ""
-          }`}
-        >
-          <GoDash className="w-6 h-6" />
-          <span className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-            Line
-          </span>
-        </button>
-        <button
-          onClick={handleCircleToggle}
-          className={`p-2 hover:bg-gray-100 rounded cursor-pointer relative group ${
-            selectedTool === "circle" ? "bg-gray-200" : ""
-          }`}
-        >
-          <FaRegCircle className="w-6 h-6" />
-          <span className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-            Circle
-          </span>
-        </button>
-      </div> */}
     </div>
   );
 };
