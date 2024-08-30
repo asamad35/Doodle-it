@@ -108,8 +108,7 @@ export default function Home() {
         const newElements = prev.filter((element) => !element.isErased);
         return newElements;
       });
-    }
-    if (selectedTool === "pan") document.body.style.cursor = "grab";
+    } else if (selectedTool === "pan") document.body.style.cursor = "grab";
     else document.body.style.cursor = "crosshair";
   };
 

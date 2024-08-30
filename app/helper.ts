@@ -28,7 +28,7 @@ export const drawElements = (
       {
         let strokeWidth;
         if (element.options.strokeWidth === "thin") {
-          strokeWidth = 2;
+          strokeWidth = 3;
         }
         if (element.options.strokeWidth === "bold") {
           strokeWidth = 4;
