@@ -28,13 +28,13 @@ export const drawElements = (
       {
         let strokeWidth;
         if (element.options.strokeWidth === "thin") {
-          strokeWidth = 5;
+          strokeWidth = 2;
         }
         if (element.options.strokeWidth === "bold") {
-          strokeWidth = 10;
+          strokeWidth = 4;
         }
         if (element.options.strokeWidth === "extraBold") {
-          strokeWidth = 20;
+          strokeWidth = 8;
         }
         const strokePoints = getStroke(element.points, {
           size: strokeWidth,
@@ -184,8 +184,8 @@ export function createElement(
   id: string,
   { x1, y1, x2, y2 }: { x1: number; y1: number; x2: number; y2: number },
   selectedTool: ToolItemType,
-  setElements: React.Dispatch<React.SetStateAction<ElementType[]>>,
-  options: OptionsType
+  options: OptionsType,
+  isErased: boolean = false
 ): ElementType {
   const roughOptions: any = {
     stroke: options.strokeColor,
@@ -196,19 +196,19 @@ export function createElement(
   };
 
   if (options.strokeStyle === "dashed") {
-    roughOptions.strokeLineDash = [15, 25];
+    roughOptions.strokeLineDash = [8, 8];
   }
   if (options.strokeStyle === "dotted") {
-    roughOptions.strokeLineDash = [6, 8];
+    roughOptions.strokeLineDash = [3, 2];
   }
   if (options.strokeWidth === "thin") {
-    roughOptions.strokeWidth = 5;
+    roughOptions.strokeWidth = 1;
   }
   if (options.strokeWidth === "bold") {
-    roughOptions.strokeWidth = 10;
+    roughOptions.strokeWidth = 4;
   }
   if (options.strokeWidth === "extraBold") {
-    roughOptions.strokeWidth = 20;
+    roughOptions.strokeWidth = 8;
   }
   switch (selectedTool) {
     case "freehand": {
@@ -229,7 +229,6 @@ export function createElement(
     case "rectangle":
     case "circle":
     case "line": {
-      console.log(options, "abcd");
       const generator = rough.generator({
         options: roughOptions,
       });
@@ -254,6 +253,7 @@ export function createElement(
         roughElement: roughFigure,
         options: options,
         position: null,
+        isErased: isErased,
       };
       return roughElement;
     }
@@ -377,7 +377,6 @@ export const updateElement = (
         targetElement.id,
         { x1, y1, x2, y2 },
         element.type,
-        setElements,
         options
       ) as RectangleElementType | LineElementType | CircleElementType;
 
@@ -509,4 +508,100 @@ export function getCalculatedMouseCoordinates(
   clientY = (clientY + scaleOffset.y) / scale;
 
   return { clientX, clientY };
+}
+
+function blendHexWithOpacity(hex: string, opacity: number) {
+  // Remove the "#" if it exists
+  hex = hex.replace("#", "");
+
+  // If the hex code is shorthand (3 characters), expand it to 6 characters
+  if (hex.length === 3) {
+    hex = hex
+      .split("")
+      .map((char) => char + char)
+      .join("");
+  }
+
+  // Validate that the hex code is now exactly 6 characters long
+  if (hex.length !== 6) {
+    throw new Error(
+      "Invalid hex code provided. It should be 6 characters long."
+    );
+  }
+
+  // Convert hex to RGB
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+
+  // Blend the color with white based on the opacity
+  const blendedR = Math.round(r + (255 - r) * (1 - opacity));
+  const blendedG = Math.round(g + (255 - g) * (1 - opacity));
+  const blendedB = Math.round(b + (255 - b) * (1 - opacity));
+
+  // Convert the blended RGB back to a hex code
+  const blendedHex = ((1 << 24) + (blendedR << 16) + (blendedG << 8) + blendedB)
+    .toString(16)
+    .slice(1)
+    .toUpperCase();
+
+  return `#${blendedHex}`;
+}
+
+export function reduceElementOpacity(
+  element: ElementType,
+  setElements: React.Dispatch<React.SetStateAction<ElementType[]>>
+) {
+  setElements((prev) => {
+    const prevElements = [...prev];
+    const targetElement = prevElements.find(
+      (prevElement) => prevElement.id === element.id
+    );
+    if (!targetElement) return prevElements;
+
+    if (element.type === "freehand") {
+      return [
+        ...prevElements.filter(
+          (prevElement) => prevElement.id !== targetElement.id
+        ),
+        {
+          ...targetElement,
+          isErased: true,
+          options: {
+            ...targetElement.options,
+            strokeColor: blendHexWithOpacity(
+              targetElement.options.strokeColor,
+              0.4
+            ),
+          },
+        },
+      ];
+    }
+
+    if (["rectangle", "circle", "line"].includes(element.type)) {
+      const { options, x1, y1, x2, y2 } = targetElement;
+
+      const newOptions = {
+        ...options,
+        strokeColor: blendHexWithOpacity(options.strokeColor, 0.4),
+        fillColor: blendHexWithOpacity(options.fillColor, 0.4),
+      };
+
+      const newElement = createElement(
+        targetElement.id,
+        { x1, y1, x2, y2 },
+        element.type,
+        newOptions,
+        true
+      ) as RectangleElementType | LineElementType | CircleElementType;
+
+      return [
+        ...prevElements.filter(
+          (prevElement) => prevElement.id !== targetElement.id
+        ),
+        newElement,
+      ];
+    }
+    return prevElements;
+  });
 }

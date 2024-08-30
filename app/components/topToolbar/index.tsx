@@ -1,4 +1,4 @@
-import React from "react";
+import React, { RefObject } from "react";
 import { FaRegCircle, FaRegSquare } from "react-icons/fa";
 import { GoDash } from "react-icons/go";
 import { IoHandRightOutline } from "react-icons/io5";
@@ -18,11 +18,13 @@ const toolItems = {
 interface TopToolbarProps {
   setSelectedTool: (tool: ToolItemType) => void;
   selectedTool: ToolItemType;
+  eraserRef: RefObject<HTMLButtonElement>;
 }
 
 const TopToolbar: React.FC<TopToolbarProps> = ({
   setSelectedTool,
   selectedTool,
+  eraserRef,
 }) => {
   const handleLineToggle = () => {
     setSelectedTool("line");
@@ -44,6 +46,7 @@ const TopToolbar: React.FC<TopToolbarProps> = ({
     setSelectedTool("eraser");
   };
   const handlePanToggle = () => {
+    document.body.style.cursor = "grab";
     setSelectedTool("pan");
   };
 
@@ -98,6 +101,7 @@ const TopToolbar: React.FC<TopToolbarProps> = ({
     <div className="absolute flex justify-center items-center left-1/2 top-4 -translate-x-1/2 bg-white rounded-lg shadow-md p-1.5 border-gray-200 border-[1px] space-x-2">
       {toolsDetails.map((tool) => (
         <button
+          ref={tool.type === "eraser" ? eraserRef : null}
           key={tool.type}
           onClick={tool.handleFunction}
           className={`p-2 rounded cursor-pointer relative group ${

@@ -24,7 +24,7 @@ type BaseElementType = {
   y2: number;
   type: ToolItemType;
   options: OptionsType;
-
+  isErased?: boolean;
   position: string | null;
 };
 

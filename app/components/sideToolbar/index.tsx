@@ -1,4 +1,4 @@
-import { useOptions, useSetOptions } from "@/app/recoil/options";
+import { useSetOptions } from "@/app/recoil/options";
 import ColorPicker from "./ColorPicker";
 import DrawStyle from "./DrawStyle";
 import {
