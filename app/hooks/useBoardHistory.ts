@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
+import { defaultDrawing } from "../helper/defaultDrawing";
 
 const useBoardHistory = () => {
-  const [boardHistoryStack, setBoardHistoryStack] = useState<ElementType[][]>(
-    []
-  );
+  const [boardHistoryStack, setBoardHistoryStack] = useState<ElementType[][]>([
+    defaultDrawing,
+  ]);
   const [undoHistoryStack, setUndoHistoryStack] = useState<ElementType[][]>([]);
 
   function pushToBoardHistory(newBoard: ElementType[]) {
@@ -45,12 +46,12 @@ const useBoardHistory = () => {
     }, 0);
   }
 
-  // useEffect(() => {
-  //   console.log(undoHistoryStack, "undoHistoryStack");
-  // }, [undoHistoryStack]);
-  // useEffect(() => {
-  //   console.log(boardHistoryStack, "boardHistoryStack");
-  // }, [boardHistoryStack]);
+  useEffect(() => {
+    console.log(undoHistoryStack, "undoHistoryStack");
+  }, [undoHistoryStack]);
+  useEffect(() => {
+    console.log(boardHistoryStack, "boardHistoryStack");
+  }, [boardHistoryStack]);
 
   return {
     pushToBoardHistory,
