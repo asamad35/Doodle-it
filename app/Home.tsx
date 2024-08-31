@@ -8,28 +8,26 @@ import {
 } from "react";
 import rough from "roughjs";
 import { v4 as uuidv4 } from "uuid";
+import AnimatedCircles from "./components/MouseEraser";
 import SideToolbar from "./components/sideToolbar/index";
 import TopToolbar from "./components/topToolbar/index";
+import UndoRedo from "./components/undoRedo.tsx";
+import Zoom from "./components/zoom/index";
+
+import { createElement } from "./helper/createElement";
+import { drawElements } from "./helper/drawElements";
 import {
   calculateDiameter,
-  createElement,
-  drawElements,
-  getCalculatedMouseCoordinates,
   getElementAtPosition,
-  getResizedCoordinates,
-  getUnitVector,
-  handleCursorStyle,
-  moveElement,
-  reduceElementOpacity,
-  updateElement,
-} from "./helper";
+} from "./helper/getElementAtPosition";
+import { moveElement } from "./helper/moveElement";
+import { getCalculatedMouseCoordinates, getResizedCoordinates, getUnitVector, handleCursorStyle } from "./helper/others";
+import { reduceElementOpacity } from "./helper/reduceElementOpacity";
+import { updateElement } from "./helper/updateElement";
+import useBoardHistory from "./hooks/useBoardHistory";
 import { useCursorPosition } from "./hooks/useCursorPosition";
 import { useElements, useSetElement } from "./recoil/elements";
 import { useOptions } from "./recoil/options";
-import Zoom from "./components/zoom/index";
-import AnimatedCircles from "./components/MouseEraser";
-import UndoRedo from "./components/undoRedo.tsx";
-import useBoardHistory from "./hooks/useBoardHistory";
 
 export default function Home() {
   const setElements = useSetElement();
@@ -79,7 +77,6 @@ export default function Home() {
     const scaleDiff = scale - 1;
     const newPanOffsetX = panOffset.x - scaleDiff * centerX;
     const newPanOffsetY = panOffset.y - scaleDiff * centerY;
-    // setScaleOffset({ x: newPanOffsetX, y: newPanOffsetY });
 
     // Save canvas state before translating
     myCanvasCtx.save();
