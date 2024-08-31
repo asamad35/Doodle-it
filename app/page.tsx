@@ -28,6 +28,8 @@ import { useElements, useSetElement } from "./recoil/elements";
 import { useOptions } from "./recoil/options";
 import Zoom from "./components/zoom";
 import AnimatedCircles from "./components/MouseEraser";
+import UndoRedo from "./components/undoRedo.tsx";
+import useBoardHistory from "./hooks/useBoardHistory";
 
 export default function Home() {
   const setElements = useSetElement();
@@ -41,16 +43,21 @@ export default function Home() {
   );
   const [isSelectedElementGrabbed, setIsSelectedElementGrabbed] =
     useState(false);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [isResizing, setIsResizing] = useState(false);
-  const [isErasing, setIsErasing] = useState(false);
+  const [action, setAction] = useState<ActionType>("none");
   const { cursorX, cursorY } = useCursorPosition();
   const [startPanPosition, setStartPanPosition] = useState({ x: 0, y: 0 });
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
-  const [isPanning, setIsPanning] = useState(false);
   const [scaleOffset, setScaleOffset] = useState({ x: 0, y: 0 });
   const [scale, setScale] = useState(2); // intial zoom value is 2 to ensure that the panOffset value doesn't become excessively large.
   const eraserRef = useRef<HTMLButtonElement>(null);
+  const [isBoardModified, setIsBoardModified] = useState(false);
+  const {
+    pushToBoardHistory,
+    boardHistoryStack,
+    pushFromUndoToBoardHistory,
+    pushToUndoHistory,
+    undoHistoryStack,
+  } = useBoardHistory();
 
   useLayoutEffect(() => {
     const myCanvas = canvasRef.current;
@@ -95,21 +102,38 @@ export default function Home() {
     document.body.style.cursor = "crosshair";
   }, []);
 
+  useEffect(() => {
+    setIsBoardModified(true);
+  }, [elements]);
+
+  useEffect(() => {
+    const latestBoard = boardHistoryStack[boardHistoryStack.length - 1] ?? [];
+    setElements(latestBoard);
+  }, [boardHistoryStack, setElements]);
+
   const handleMouseUp = () => {
     setSelectedElement(null);
     setIsSelectedElementGrabbed(false);
-    setIsDrawing(false);
-    setIsResizing(false);
-    setIsPanning(false);
-    setIsErasing(false);
 
     if (selectedTool === "eraser") {
       setElements((prev) => {
+        const prevElemensCount = prev.length;
         const newElements = prev.filter((element) => !element.isErased);
+        const newElementsCount = newElements.length;
+        if (prevElemensCount > newElementsCount) {
+          pushToBoardHistory(newElements);
+        }
         return newElements;
       });
     } else if (selectedTool === "pan") document.body.style.cursor = "grab";
     else document.body.style.cursor = "crosshair";
+
+    if (isBoardModified && selectedTool !== "eraser") {
+      pushToBoardHistory(elements);
+    }
+
+    setIsBoardModified(false);
+    setAction("none");
   };
 
   const handleMouseDown = (e: MouseEvent<HTMLCanvasElement>) => {
@@ -121,12 +145,12 @@ export default function Home() {
     );
 
     if (selectedTool === "eraser") {
-      setIsErasing(true);
+      setAction("erasing");
       return;
     }
     if (selectedTool === "pan") {
       setStartPanPosition({ x: clientX, y: clientY });
-      setIsPanning(true);
+      setAction("panning");
       document.body.style.cursor = "grabbing";
       return;
     }
@@ -157,7 +181,7 @@ export default function Home() {
               "bottomRight",
             ].includes(selectedElement.position ?? "");
             if (grabbedFromEdge) {
-              setIsResizing(true);
+              setAction("resizing");
             }
           }
           break;
@@ -170,7 +194,7 @@ export default function Home() {
             selectedElement.position ?? ""
           );
           if (grabbedFromEdge) {
-            setIsResizing(true);
+            setAction("resizing");
           }
           break;
         }
@@ -218,7 +242,7 @@ export default function Home() {
 
             updateElement(newCoordinates, setElements, selectedElement);
 
-            setIsResizing(true);
+            setAction("resizing");
           }
           break;
         }
@@ -235,7 +259,7 @@ export default function Home() {
       );
       setElements((prev) => [...prev, newElement]);
       setSelectedElement(newElement);
-      setIsDrawing(true);
+      setAction("drawing");
     }
   };
 
@@ -247,7 +271,7 @@ export default function Home() {
       scaleOffset
     );
 
-    if (isErasing) {
+    if (action === "erasing") {
       const element = getElementAtPosition(clientX, clientY, elements);
       if (!element || element.isErased) return;
       // reduce the element opacity to indicate that it will be erased
@@ -255,7 +279,7 @@ export default function Home() {
       return;
     }
 
-    if (selectedTool === "pan" && isPanning) {
+    if (selectedTool === "pan" && action === "panning") {
       const dx = clientX - startPanPosition.x;
       const dy = clientY - startPanPosition.y;
       setPanOffset({ x: panOffset.x + dx, y: panOffset.y + dy });
@@ -278,7 +302,7 @@ export default function Home() {
 
           case "rectangle":
           case "line":
-            if (isResizing) {
+            if (action === "resizing") {
               const resizedCoordinates = getResizedCoordinates(
                 clientX,
                 clientY,
@@ -302,7 +326,7 @@ export default function Home() {
             break;
 
           case "circle": {
-            if (isResizing) {
+            if (action === "resizing") {
               const updatedCoordinates = {
                 x1: selectedElement.x1,
                 y1: selectedElement.y1,
@@ -318,7 +342,7 @@ export default function Home() {
         return;
       }
     }
-    if (isDrawing && selectedElement) {
+    if (action === "drawing" && selectedElement) {
       const { x1, y1 } = selectedElement;
       updateElement(
         {
@@ -348,6 +372,12 @@ export default function Home() {
       />
       <SideToolbar selectedTool={selectedTool} />
       <Zoom setScale={setScale} />
+      <UndoRedo
+        undoFunction={pushToUndoHistory}
+        redoFunction={pushFromUndoToBoardHistory}
+        undoHistoryStack={undoHistoryStack}
+        boardHistoryStack={boardHistoryStack}
+      />
       <canvas
         id="myCanvas"
         ref={canvasRef}

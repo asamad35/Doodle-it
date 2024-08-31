@@ -28,7 +28,7 @@ const SideToolbar = ({ selectedTool }: { selectedTool: ToolItemType }) => {
   };
   return (
     <>
-      {selectedTool !== "pan" && selectedTool !== "pointer" ? (
+      {!["pan", "pointer", "eraser"].includes(selectedTool) ? (
         <section className="absolute top-1/2 -translate-y-1/2 left-32 flex flex-col justify-center items-center -translate-x-1/2 bg-white rounded-lg shadow-md p-4 border-gray-200 border-[1px] space-x-2">
           <ColorPicker
             heading="Stroke"

@@ -11,6 +11,8 @@ type OptionsType = {
   fillColor: string;
 };
 
+type ActionType = "drawing" | "resizing" | "erasing" | "panning" | "none";
+
 type PointType = {
   x: number;
   y: number;

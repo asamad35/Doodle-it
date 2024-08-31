@@ -17,7 +17,7 @@ const Zoom = ({
     }
   }
   return (
-    <div className="absolute bottom-4 left-10 flex gap-3 bg-gray-200 rounded-md">
+    <div className="absolute bottom-4 z-[1000] left-10 flex gap-3 bg-gray-200 rounded-md">
       <button
         onClick={() => handleZoom(-0.1)}
         className="hover:bg-gray-100 p-2 rounded-l-md relative group duration-200"
