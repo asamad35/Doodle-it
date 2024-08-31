@@ -100,6 +100,11 @@ export default function Home() {
 
   useEffect(() => {
     document.body.style.cursor = "crosshair";
+    const canvas = canvasRef.current;
+    if (canvas) {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
   }, []);
 
   useEffect(() => {
@@ -381,12 +386,12 @@ export default function Home() {
       <canvas
         id="myCanvas"
         ref={canvasRef}
-        width={window.innerWidth}
-        height={window.innerHeight}
+        // width={window.innerWidth}
+        // height={window.innerHeight}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-      ></canvas>
+      />
       {selectedTool === "eraser" && <AnimatedCircles eraserRef={eraserRef} />}
     </div>
   );
