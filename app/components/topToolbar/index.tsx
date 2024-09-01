@@ -1,3 +1,4 @@
+import Image from "next/image";
 import React, { RefObject, useEffect } from "react";
 import { FaRegCircle, FaRegSquare } from "react-icons/fa";
 import { GoDash } from "react-icons/go";
@@ -19,12 +20,16 @@ interface TopToolbarProps {
   setSelectedTool: (tool: ToolItemType) => void;
   selectedTool: ToolItemType;
   eraserRef: RefObject<HTMLButtonElement>;
+  setHelperModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  helperModalOpen: boolean;
 }
 
 const TopToolbar: React.FC<TopToolbarProps> = ({
   setSelectedTool,
   selectedTool,
   eraserRef,
+  setHelperModalOpen,
+  helperModalOpen,
 }) => {
   const handleLineToggle = () => {
     setSelectedTool("line");
@@ -55,7 +60,7 @@ const TopToolbar: React.FC<TopToolbarProps> = ({
   useEffect(() => {
     if (selectedTool === toolItems.pan) {
       document.body.style.cursor = "grab";
-    }  else {
+    } else if (!helperModalOpen) {
       document.body.style.cursor = "crosshair";
     }
   }, [selectedTool]);
@@ -106,22 +111,38 @@ const TopToolbar: React.FC<TopToolbarProps> = ({
   ];
 
   return (
-    <div className="absolute z-[999] flex justify-center items-center left-1/2 top-4 -translate-x-1/2 bg-white rounded-lg shadow-md p-1.5 border-gray-200 border-[1px] space-x-2">
-      {toolsDetails.map((tool) => (
-        <button
-          ref={tool.type === "eraser" ? eraserRef : null}
-          key={tool.type}
-          onClick={tool.handleFunction}
-          className={`p-2 rounded cursor-pointer relative group ${
-            selectedTool === tool.type ? "bg-violet-200" : "hover:bg-violet-100"
-          }`}
-        >
-          {tool.icon}
-          <span className="absolute top-full  left-1/2 -translate-x-1/2 my-1.5 px-2 py-1 bg-black text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-            {tool.tooltip}
-          </span>
-        </button>
-      ))}
+    <div className="absolute z-[999] flex justify-center gap-4 items-center left-1/2 top-4 -translate-x-1/2">
+      <div className="bg-white rounded-lg shadow-md p-1.5 border-gray-200 border-[1px] space-x-2">
+        {toolsDetails.map((tool) => (
+          <button
+            ref={tool.type === "eraser" ? eraserRef : null}
+            key={tool.type}
+            onClick={tool.handleFunction}
+            className={`p-2 rounded cursor-pointer relative group ${
+              selectedTool === tool.type
+                ? "bg-violet-200"
+                : "hover:bg-violet-100"
+            }`}
+          >
+            {tool.icon}
+            <span className="absolute top-full left-1/2 -translate-x-1/2 my-1.5 px-2 py-1 bg-black text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+              {tool.tooltip}
+            </span>
+          </button>
+        ))}
+      </div>
+      <button
+        onClick={() => {
+          setHelperModalOpen(true);
+          document.body.style.cursor = "default";
+        }}
+        className="bg-white rounded-lg shadow-md border-gray-200 border-[1px] hover:bg-violet-100 rounded-r-md p-2 group relative duration-200"
+      >
+        <Image src="/help.svg" alt="help" width={20} height={20} />
+        <span className="absolute top-full left-1/2 -translate-x-1/2 my-1.5 px-2 py-1 bg-black text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+          Guide
+        </span>
+      </button>
     </div>
   );
 };

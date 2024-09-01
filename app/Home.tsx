@@ -21,13 +21,20 @@ import {
   getElementAtPosition,
 } from "./helper/getElementAtPosition";
 import { moveElement } from "./helper/moveElement";
-import { getCalculatedMouseCoordinates, getResizedCoordinates, getUnitVector, handleCursorStyle } from "./helper/others";
+import {
+  getCalculatedMouseCoordinates,
+  getResizedCoordinates,
+  getUnitVector,
+  handleCursorStyle,
+  handleZoom,
+} from "./helper/others";
 import { reduceElementOpacity } from "./helper/reduceElementOpacity";
 import { updateElement } from "./helper/updateElement";
 import useBoardHistory from "./hooks/useBoardHistory";
 import { useCursorPosition } from "./hooks/useCursorPosition";
 import { useElements, useSetElement } from "./recoil/elements";
 import { useOptions } from "./recoil/options";
+import HelperModal from "./components/helper";
 
 export default function Home() {
   const setElements = useSetElement();
@@ -56,6 +63,10 @@ export default function Home() {
     pushToUndoHistory,
     undoHistoryStack,
   } = useBoardHistory();
+  const [zoomPercentage, setZoomPercentage] = useState(100);
+  const [helperModalOpen, setHelperModalOpen] = useState(true);
+  const [prevSelectedTool, setPrevSelectedTool] =
+    useState<ToolItemType>("freehand");
 
   useLayoutEffect(() => {
     const myCanvas = canvasRef.current;
@@ -96,13 +107,72 @@ export default function Home() {
   }, [elements, canvasRef, panOffset, scale]);
 
   useEffect(() => {
-    document.body.style.cursor = "crosshair";
     const canvas = canvasRef.current;
     if (canvas) {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     }
   }, []);
+
+  useEffect(() => {
+    // listen keyboard events
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === "z") {
+          pushToUndoHistory();
+        } else if (e.key === "y") {
+          pushFromUndoToBoardHistory();
+        }
+        if (e.key === "=" || e.key === "+") {
+          e.preventDefault();
+          handleZoom(0.1, setScale, setZoomPercentage, zoomPercentage);
+        } else if (e.key === "-") {
+          e.preventDefault();
+
+          handleZoom(-0.1, setScale, setZoomPercentage, zoomPercentage);
+        }
+      }
+      if (e.key === " ") {
+        if (selectedTool !== "pan") setPrevSelectedTool(selectedTool);
+        setSelectedTool("pan");
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === " ") {
+        setSelectedTool(prevSelectedTool);
+      }
+    };
+
+    const handleScroll = (e: WheelEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        if (e.deltaY < 0) {
+          handleZoom(0.1, setScale, setZoomPercentage, zoomPercentage);
+        } else if (e.deltaY > 0) {
+          handleZoom(-0.1, setScale, setZoomPercentage, zoomPercentage);
+        }
+      }
+    };
+
+    window.addEventListener("wheel", handleScroll, { passive: false });
+    window.addEventListener("keydown", handleKeyDown, { passive: false });
+    window.addEventListener("keyup", handleKeyUp, { passive: false });
+    return () => {
+      window.removeEventListener("wheel", handleScroll);
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, [
+    pushToUndoHistory,
+    pushFromUndoToBoardHistory,
+    boardHistoryStack,
+    undoHistoryStack,
+    setScale,
+    zoomPercentage,
+    selectedTool,
+    prevSelectedTool,
+  ]);
 
   useEffect(() => {
     setIsBoardModified(true);
@@ -371,15 +441,22 @@ export default function Home() {
         eraserRef={eraserRef}
         setSelectedTool={setSelectedTool}
         selectedTool={selectedTool}
+        setHelperModalOpen={setHelperModalOpen}
+        helperModalOpen={helperModalOpen}
       />
       <SideToolbar selectedTool={selectedTool} />
-      <Zoom setScale={setScale} />
+      <Zoom
+        zoomPercentage={zoomPercentage}
+        setZoomPercentage={setZoomPercentage}
+        setScale={setScale}
+      />
       <UndoRedo
         undoFunction={pushToUndoHistory}
         redoFunction={pushFromUndoToBoardHistory}
         undoHistoryStack={undoHistoryStack}
         boardHistoryStack={boardHistoryStack}
       />
+      <HelperModal isOpen={helperModalOpen} setIsOpen={setHelperModalOpen} />
       <canvas
         id="myCanvas"
         ref={canvasRef}

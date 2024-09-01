@@ -42,12 +42,6 @@ const SideToolbar = ({ selectedTool }: { selectedTool: ToolItemType }) => {
             onClick={updateFillColor}
             type="fillColor"
           />
-          <DrawStyle
-            heading="Fill Style"
-            styleArray={fillStyles}
-            onClick={updateFillStyle}
-            type="fillStyle"
-          />
           {selectedTool !== "freehand" && (
             <DrawStyle
               heading="Stroke Style"
@@ -55,6 +49,16 @@ const SideToolbar = ({ selectedTool }: { selectedTool: ToolItemType }) => {
               onClick={updateStrokeStyle}
               type="strokeStyle"
             />
+          )}
+          {!["freehand", "line"].includes(selectedTool) && (
+            <>
+              <DrawStyle
+                heading="Fill Style"
+                styleArray={fillStyles}
+                onClick={updateFillStyle}
+                type="fillStyle"
+              />
+            </>
           )}
           <DrawStyle
             heading="Stroke Width"

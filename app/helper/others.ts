@@ -1,4 +1,3 @@
-
 export function getSvgPathFromStroke(stroke: [number, number][]) {
   if (!stroke.length) return "";
 
@@ -132,4 +131,19 @@ export function getCalculatedMouseCoordinates(
   clientY = (clientY + scaleOffset.y) / scale;
 
   return { clientX, clientY };
+}
+
+export function handleZoom(
+  dZoom: number,
+  setScale: React.Dispatch<React.SetStateAction<number>>,
+  setZoomPercentage: React.Dispatch<React.SetStateAction<number>>,
+  zoomPercentage: number
+) {
+  if (dZoom > 0 && zoomPercentage < 200) {
+    setZoomPercentage((prevState) => Math.min(prevState + 10, 200));
+    setScale((prevState) => prevState + dZoom);
+  } else if (dZoom < 0 && zoomPercentage > 10) {
+    setZoomPercentage((prevState) => Math.max(prevState - 10, 10));
+    setScale((prevState) => prevState + dZoom);
+  }
 }
